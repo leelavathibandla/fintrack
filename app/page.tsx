@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 type Item = { id: number, title: string, amount: number, type: 'income' | 'expense' }
 
@@ -9,15 +9,25 @@ export default function Home() {
   const [title, setTitle] = useState('')
   const [type, setType] = useState<'income' | 'expense'>('expense')
 
+  // Data ni browser lo save cheyyadam
+  useEffect(() => {
+    const saved = localStorage.getItem('fintrack-data')
+    if (saved) setItems(JSON.parse(saved))
+  }, [])
+
+  useEffect(() => {
+    localStorage.setItem('fintrack-data', JSON.stringify(items))
+  }, [items])
+
   const addItem = () => {
-    if (!amount || !title) return
+    if (!amount ||!title) return
     setItems([...items, { id: Date.now(), title, amount: Number(amount), type }])
     setAmount('')
     setTitle('')
   }
 
   const deleteItem = (id: number) => {
-    setItems(items.filter(i => i.id !== id))
+    setItems(items.filter(i => i.id!== id))
   }
 
   const income = items.filter(i => i.type === 'income').reduce((sum, i) => sum + i.amount, 0)
@@ -25,40 +35,59 @@ export default function Home() {
   const balance = income - expense
 
   return (
-    <main style={{padding: '20px', maxWidth: '600px', margin: '0 auto', fontFamily: 'Arial'}}>
-      <h1>FinTrack 💰</h1>
-      <h2>Balance: ₹{balance}</h2>
-      <p>Income: ₹{income} | Expense: ₹{expense}</p>
-      
-      <div style={{marginBottom: '20px'}}>
-        <select value={type} onChange={(e) => setType(e.target.value as any)} style={{padding: '8px', marginRight: '10px'}}>
-          <option value="expense">Expense</option>
-          <option value="income">Income</option>
+    <main style={{padding: '20px', maxWidth: '700px', margin: '0 auto', fontFamily: 'Arial', background: '#f5f5f5', minHeight: '100vh'}}>
+      <h1 style={{textAlign: 'center'}}>FinTrack 💰 Pro</h1>
+
+      {/* Cards */}
+      <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px', marginBottom: '20px'}}>
+        <div style={{background: 'white', padding: '15px', borderRadius: '10px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)'}}>
+          <p style={{margin: 0, color: '#666'}}>Balance</p>
+          <h2 style={{margin: '5px 0', color: balance >= 0? 'green' : 'red'}}>₹{balance}</h2>
+        </div>
+        <div style={{background: 'white', padding: '15px', borderRadius: '10px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)'}}>
+          <p style={{margin: 0, color: '#666'}}>Income</p>
+          <h2 style={{margin: '5px 0', color: 'green'}}>₹{income}</h2>
+        </div>
+        <div style={{background: 'white', padding: '15px', borderRadius: '10px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)'}}>
+          <p style={{margin: 0, color: '#666'}}>Expense</p>
+          <h2 style={{margin: '5px 0', color: 'red'}}>₹{expense}</h2>
+        </div>
+      </div>
+
+      {/* Add Form */}
+      <div style={{background: 'white', padding: '20px', borderRadius: '10px', marginBottom: '20px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)'}}>
+        <select value={type} onChange={(e) => setType(e.target.value as any)} style={{padding: '10px', marginRight: '10px', width: '100%', marginBottom: '10px'}}>
+          <option value="expense">📉 Expense</option>
+          <option value="income">📈 Income</option>
         </select>
-        <input 
-          placeholder="Name" 
+        <input
+          placeholder="Name - Salary, Coffee"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          style={{padding: '8px', marginRight: '10px'}}
+          style={{padding: '10px', width: '100%', marginBottom: '10px', boxSizing: 'border-box'}}
         />
-        <input 
-          placeholder="Amount" 
+        <input
+          placeholder="Amount"
           type="number"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
-          style={{padding: '8px', marginRight: '10px'}}
+          style={{padding: '10px', width: '100%', marginBottom: '10px', boxSizing: 'border-box'}}
         />
-        <button onClick={addItem} style={{padding: '8px 16px'}}>Add</button>
+        <button onClick={addItem} style={{padding: '10px', width: '100%', background: '#0070f3', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer'}}>Add</button>
       </div>
 
-      <ul>
+      {/* List */}
+      <div style={{background: 'white', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)'}}>
+        <h3>Transactions</h3>
+        {items.length === 0 && <p>No transactions yet</p>}
         {items.map(i => (
-          <li key={i.id} style={{marginBottom: '8px'}}>
-            {i.type === 'income' ? '📈' : '📉'} {i.title} - ₹{i.amount}
-            <button onClick={() => deleteItem(i.id)} style={{marginLeft: '10px'}}>Delete</button>
-          </li>
+          <div key={i.id} style={{display: 'flex', justifyContent: 'space-between', padding: '10px', borderBottom: '1px solid #eee'}}>
+            <span>{i.type === 'income'? '📈' : '📉'} {i.title}</span>
+            <span style={{color: i.type === 'income'? 'green' : 'red'}}>₹{i.amount}</span>
+            <button onClick={() => deleteItem(i.id)} style={{background: 'red', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer'}}>Delete</button>
+          </div>
         ))}
-      </ul>
+      </div>
     </main>
   )
 }
